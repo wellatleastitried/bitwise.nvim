@@ -501,12 +501,21 @@ local function scan(scope, name, ident, adapter, bufnr)
     elseif node:named_child_count() == 0 then
       -- Some grammars keep a whole assignment in one token (`let y=20` in
       -- shell is a single `word`), so the name is never a node of its own.
+      local txt = text_of(node, bufnr)
       local parent = node:parent()
-      if parent and POISON[parent:type()] then
-        local txt = text_of(node, bufnr)
-        if txt:sub(1, #name + 1) == name .. "=" then
-          return nil, true
-        end
+      if parent and POISON[parent:type()] and txt:sub(1, #name + 1) == name .. "=" then
+        return nil, true
+      end
+      -- Shell arithmetic contexts fold `y++`/`++y`/`y--`/`--y` into a single
+      -- token too (`((y++))` is one `word`, not its own increment node), and
+      -- this pattern is never anything but a mutation.
+      if
+        txt == name .. "++"
+        or txt == "++" .. name
+        or txt == name .. "--"
+        or txt == "--" .. name
+      then
+        return nil, true
       end
     elseif t == "preproc_call" then
       -- `#undef NAME` is a preproc_call in the C grammar, not its own type.
