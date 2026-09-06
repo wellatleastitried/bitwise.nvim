@@ -509,12 +509,7 @@ local function scan(scope, name, ident, adapter, bufnr)
       -- Shell arithmetic contexts fold `y++`/`++y`/`y--`/`--y` into a single
       -- token too (`((y++))` is one `word`, not its own increment node), and
       -- this pattern is never anything but a mutation.
-      if
-        txt == name .. "++"
-        or txt == "++" .. name
-        or txt == name .. "--"
-        or txt == "--" .. name
-      then
+      if txt == name .. "++" or txt == "++" .. name or txt == name .. "--" or txt == "--" .. name then
         return nil, true
       end
     elseif t == "preproc_call" then
