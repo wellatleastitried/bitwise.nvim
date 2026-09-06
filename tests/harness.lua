@@ -1,5 +1,3 @@
---- Tiny zero-dependency test harness.
----
 --- Deliberately minimal: the core of the plugin is plain Lua, so the tests run
 --- under `lua`, `luajit` or `nvim -l` without any external framework.
 
