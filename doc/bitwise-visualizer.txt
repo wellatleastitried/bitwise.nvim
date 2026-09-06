@@ -1,0 +1,194 @@
+*bitwise-visualizer.txt*   Interactive bitwise expression visualization
+
+==============================================================================
+CONTENTS                                          *bitwise-visualizer-contents*
+
+  1. Introduction ................ |bitwise-visualizer-introduction|
+  2. Requirements ................ |bitwise-visualizer-requirements|
+  3. Configuration ............... |bitwise-visualizer-configuration|
+  4. Commands .................... |bitwise-visualizer-commands|
+  5. Lua API ..................... |bitwise-visualizer-api|
+  6. Languages ................... |bitwise-visualizer-languages|
+  7. Semantics ................... |bitwise-visualizer-semantics|
+  8. Highlights .................. |bitwise-visualizer-highlights|
+  9. Limitations ................. |bitwise-visualizer-limitations|
+
+==============================================================================
+1. INTRODUCTION                               *bitwise-visualizer-introduction*
+
+bitwise-visualizer.nvim renders a bit-level visualization of the bitwise
+expression under the cursor using extmarks and virtual lines. The buffer is
+never modified. >
+
+      0000 1010  (10)
+    & 0000 1100  (12)
+      ─────────
+      0000 1000  (8)
+
+    int x = 10 & 12;
+<
+Expressions are located with Tree-sitter, not regular expressions, and are
+evaluated with a tri-state (0 / 1 / unknown) bit engine so that runtime
+operands are never guessed.
+
+==============================================================================
+2. REQUIREMENTS                               *bitwise-visualizer-requirements*
+
+  - Neovim 0.10 or newer
+  - a Tree-sitter parser for the language being edited
+
+Run `:checkhealth bitwise-visualizer` to verify the setup.
+
+==============================================================================
+3. CONFIGURATION                             *bitwise-visualizer-configuration*
+
+Calling setup() is optional; the defaults work immediately. Unknown option
+names are reported with a warning instead of being ignored. >lua
+
+    require("bitwise-visualizer").setup({
+      enabled = true,
+      auto = true,
+      width = "auto",              -- "auto" | 8 | 16 | 32 | 64
+      display_widths = { 8, 16, 32, 64 },
+      group_bits = 4,
+      show_decimal = true,
+      show_hex = false,
+      show_labels = true,
+      show_unknown = true,
+      show_fully_unknown = false,
+      show_notes = true,
+      resolve_identifiers = true,
+      generic_fallback = true,
+      operators = { ["&"] = true, ["|"] = true, ["^"] = true, ["~"] = true,
+                    ["<<"] = true, [">>"] = true, [">>>"] = true,
+                    ["&^"] = true, ["-"] = true, ["+"] = true },
+      trigger = "expression",      -- "expression" | "operator"
+      subexpression = true,
+      position = "above",          -- "above" | "below" | "eol"
+      renderer = "virt_lines",
+      update = {
+        debounce = 50,
+        in_insert = false,
+        events = { "CursorMoved", "CursorMovedI", "TextChanged",
+                   "TextChangedI", "BufEnter" },
+      },
+      max_nodes = 32,
+      max_line_length = 500,
+      max_buffer_lines = 100000,
+      disabled_filetypes = { "help", "text", "markdown", "TelescopePrompt" },
+    })
+<
+Configuration may also be provided before the plugin loads via the dictionary
+`g:bitwise_visualizer`.
+
+==============================================================================
+4. COMMANDS                                       *bitwise-visualizer-commands*
+
+                                                    *:BitwiseVisualizerEnable*
+:BitwiseVisualizerEnable      Enable the visualizer.
+
+                                                   *:BitwiseVisualizerDisable*
+:BitwiseVisualizerDisable     Disable it and clear all decorations.
+
+                                                    *:BitwiseVisualizerToggle*
+:BitwiseVisualizerToggle      Toggle the visualizer.
+
+                                                      *:BitwiseVisualizerShow*
+:BitwiseVisualizerShow        Visualize the expression at the cursor once,
+                              even when disabled or when auto is off.
+:BitwiseVisualizerShow!       Echo the visualization as plain text.
+
+                                                      *:BitwiseVisualizerHide*
+:BitwiseVisualizerHide        Clear the current buffer's visualization.
+
+                                                     *:BitwiseVisualizerWidth*
+:BitwiseVisualizerWidth {w}   Set the bit width: auto, 8, 16, 32 or 64.
+
+                                                    *:BitwiseVisualizerStatus*
+:BitwiseVisualizerStatus      Show diagnostics for the current position.
+
+                                                     *:BitwiseVisualizerReset*
+:BitwiseVisualizerReset       Restore the default configuration.
+
+==============================================================================
+5. LUA API                                             *bitwise-visualizer-api*
+
+>lua
+    local bv = require("bitwise-visualizer")
+
+    bv.setup(opts)        -- configure (optional)
+    bv.configure(patch)   -- change configuration at runtime and redraw
+    bv.enable()
+    bv.disable()
+    bv.toggle()           -- returns the new state
+    bv.show()             -- one-shot visualization
+    bv.hide()
+    bv.refresh()
+    bv.render_text(overrides)   -- string[] of the visualization
+    bv.analyze(buf, row, col, overrides)  -- analysis without drawing
+    bv.is_enabled()
+    bv.status()
+<
+Alternative rendering modes can be added with: >lua
+    require("bitwise-visualizer.renderer").register_backend(name, fn)
+<
+==============================================================================
+6. LANGUAGES                                     *bitwise-visualizer-languages*
+
+Supported out of the box: C, C++, Objective-C, CUDA, Rust, Go, Java,
+JavaScript, TypeScript, TSX, Python and Lua.
+
+Operators: `&` `|` `^` `~` `<<` `>>`, plus `>>>` (Java, JavaScript) and `&^`
+(Go). Unary `-` and `+` are understood.
+
+New languages are registered with: >lua
+    require("bitwise-visualizer.languages").register(adapter)
+<
+==============================================================================
+7. SEMANTICS                                     *bitwise-visualizer-semantics*
+
+Values are classified as known, partial or unknown. Unknown bits are printed
+as `?` and propagate through every operator (`0 & ? = 0`, `1 | ? = 1`,
+`? ^ x = ?`).
+
+With `width = "auto"` the expression is evaluated at the language's natural
+width (promoted by literal suffixes such as 1ULL or 255u8) and displayed at
+the smallest width that hides only redundant sign or zero extension.
+
+Right shifts are arithmetic for signed values in C, Rust, Go and Java, and
+logical in Lua. Shifts of at least the operand width are treated as undefined
+(C, C++, Rust), masked (Java, JavaScript) or saturating (Go, Python, Lua).
+
+Nothing is ever displayed as a confident result when the semantics cannot be
+determined: the value degrades to unknown bits with a note, or the
+visualization is suppressed.
+
+==============================================================================
+8. HIGHLIGHTS                                   *bitwise-visualizer-highlights*
+
+    BitwiseVisualizerOne          a set bit           (default: String)
+    BitwiseVisualizerZero         a clear bit         (default: Comment)
+    BitwiseVisualizerUnknown      a runtime bit       (default: DiagnosticWarn)
+    BitwiseVisualizerActive       contributing bit    (default: DiagnosticOk)
+    BitwiseVisualizerSeparator    the rule            (default: NonText)
+    BitwiseVisualizerOperator     operator column     (default: Operator)
+    BitwiseVisualizerLabel        operand source text (default: Identifier)
+    BitwiseVisualizerValue        decimal/hex value   (default: Number)
+    BitwiseVisualizerNote         caveats             (default: Comment)
+    BitwiseVisualizerResult       reserved            (default: Special)
+
+==============================================================================
+9. LIMITATIONS                                 *bitwise-visualizer-limitations*
+
+  - Constant resolution is syntactic: single-assignment locals and C
+    #defines resolve; anything control-flow dependent stays unknown.
+  - Languages without an adapter are analysed structurally and assume
+    64-bit signed semantics; / and % are never folded. Word operators
+    are only read as bitwise when the spelling is unambiguous, so
+    "and"/"or"/"xor"/"not" are ignored.
+  - Macros, const and enum values are not resolved.
+  - JavaScript BigInt literals are declined rather than approximated.
+  - Character literals are read as integers in C/C++/Java only.
+  - Nothing is shown inside syntactically broken code.
+
+vim:tw=78:ts=8:noet:ft=help:norl:
