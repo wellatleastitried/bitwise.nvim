@@ -85,13 +85,15 @@ Configuration may also be provided before the plugin loads via the dictionary
 4. COMMANDS                                       *bitwise-visualizer-commands*
 
                                                     *:BitwiseVisualizerEnable*
-:BitwiseVisualizerEnable      Enable the visualizer.
+:BitwiseVisualizerEnable      Enable the visualizer and turn cursor-following
+                              back on (sets `auto = true`).
 
                                                    *:BitwiseVisualizerDisable*
-:BitwiseVisualizerDisable     Disable it and clear all decorations.
+:BitwiseVisualizerDisable     Disable it, turn cursor-following off (sets
+                              `auto = false`), and clear all decorations.
 
                                                     *:BitwiseVisualizerToggle*
-:BitwiseVisualizerToggle      Toggle the visualizer.
+:BitwiseVisualizerToggle      Toggle between the two states above.
 
                                                       *:BitwiseVisualizerShow*
 :BitwiseVisualizerShow        Visualize the expression at the cursor once,
@@ -109,6 +111,11 @@ Configuration may also be provided before the plugin loads via the dictionary
 
                                                      *:BitwiseVisualizerReset*
 :BitwiseVisualizerReset       Restore the default configuration.
+
+`enable`/`disable`/`toggle` always move `enabled` and `auto` together, so
+they never disagree about whether anything is following the cursor. For a
+permanently manual-only setup, set `auto = false` in |bitwise-visualizer-configuration|
+and use `show()`/`hide()` instead, which work regardless of `enabled`/`auto`.
 
 ==============================================================================
 5. LUA API                                             *bitwise-visualizer-api*
