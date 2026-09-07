@@ -31,7 +31,6 @@ buffer is never modified.
 8. [Commands and API](#commands-and-api)
 9. [Performance](#performance)
 10. [Known limitations](#known-limitations)
-11. [Development and testing](#development-and-testing)
 
 ---
 
