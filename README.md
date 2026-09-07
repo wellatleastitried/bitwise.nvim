@@ -59,7 +59,7 @@ editing.
 
 ```lua
 {
-  "wellatleastitried/bitwise.nvim",
+  "wellatleastitried/bitwise-visualizer.nvim",
   main = "bitwise-visualizer",
   event = "VeryLazy",
   opts = {
@@ -73,7 +73,7 @@ editing.
 
 ```lua
 use({
-  "wellatleastitried/bitwise.nvim",
+  "wellatleastitried/bitwise-visualizer.nvim",
   config = function()
     require("bitwise-visualizer").setup({})
   end,
@@ -83,7 +83,7 @@ use({
 ### vim-plug
 
 ```vim
-Plug 'wellatleastitried/bitwise.nvim'
+Plug 'wellatleastitried/bitwise-visualizer.nvim'
 " optional:
 lua require("bitwise-visualizer").setup({})
 ```
