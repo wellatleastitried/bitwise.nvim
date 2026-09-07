@@ -11,6 +11,9 @@ M.defaults = {
 
   --- When true the visualisation follows the cursor. When false it is only
   --- shown after an explicit `:BitwiseVisualizerShow` / `show()` call.
+  --- `enable()`/`disable()`/`toggle()` set this together with `enabled`, so
+  --- the two never disagree; set it directly with `setup()`/`configure()`
+  --- for a permanently manual-only setup.
   auto = true,
 
   --- Bit width used for evaluation and display.

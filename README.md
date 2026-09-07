@@ -428,15 +428,22 @@ value that a human reader could disprove.
 
 | Command | Lua | Description |
 | --- | --- | --- |
-| `:BitwiseVisualizerEnable` | `require("bitwise-visualizer").enable()` | enable |
-| `:BitwiseVisualizerDisable` | `.disable()` | disable and clear |
-| `:BitwiseVisualizerToggle` | `.toggle()` | toggle, returns the new state |
+| `:BitwiseVisualizerEnable` | `require("bitwise-visualizer").enable()` | enable, and turn cursor-following back on |
+| `:BitwiseVisualizerDisable` | `.disable()` | disable, turn cursor-following off, and clear |
+| `:BitwiseVisualizerToggle` | `.toggle()` | toggle between the above two states, returns the new state |
 | `:BitwiseVisualizerShow` | `.show()` | one-shot visualization at the cursor |
 | `:BitwiseVisualizerShow!` | `.render_text()` | echo it as plain text |
 | `:BitwiseVisualizerHide` | `.hide()` | clear the current buffer |
 | `:BitwiseVisualizerWidth {auto\|8\|16\|32\|64}` | `.configure({ width = 8 })` | change the width |
 | `:BitwiseVisualizerStatus` | `.status()` | diagnostics |
 | `:BitwiseVisualizerReset` | `require("bitwise-visualizer.config").reset()` | restore defaults |
+
+`enable()`/`disable()`/`toggle()` always move both `enabled` and `auto`
+together, so they can never disagree: `enable()` sets both to `true`,
+`disable()` sets both to `false`. If you want the visualization enabled but
+manual-only (no automatic cursor-following), set `auto = false` yourself
+(in `setup()` or with `configure({ auto = false })`) and drive it with
+`show()`/`hide()`, which work regardless of `enabled`/`auto`.
 
 Additional Lua entry points:
 

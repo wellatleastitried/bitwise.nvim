@@ -312,6 +312,33 @@ t.describe("integration", function()
       t.eq(true, bv.show())
       bv.enable()
     end)
+
+    t.it("enable() turns auto back on even if it was configured off", function()
+      config.setup({ auto = false })
+      h.buffer("c", { "int x = 10 & 12;", "int y = 3 & 4;" })
+      h.cursor_on("&", 1)
+
+      bv.enable()
+      t.eq(true, config.get().auto, "enable() must force auto = true")
+      t.eq(1, #renderer.extmarks(0))
+
+      -- With auto back on, moving to another expression must redraw without
+      -- an explicit show() call.
+      h.cursor_on("&", 2)
+      vim.api.nvim_exec_autocmds("CursorMoved", { buffer = 0 })
+      vim.wait(200)
+      t.contains(table.concat(bv.render_text() or {}, "\n"), "0000 0000")
+
+      config.reset()
+    end)
+
+    t.it("disable() turns auto back off so the two flags never disagree", function()
+      config.setup({ auto = true })
+      bv.disable()
+      t.eq(false, config.get().enabled)
+      t.eq(false, config.get().auto)
+      config.reset()
+    end)
   end)
 
   t.describe("commands", function()

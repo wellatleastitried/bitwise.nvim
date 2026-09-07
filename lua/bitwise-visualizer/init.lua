@@ -18,17 +18,17 @@ M.languages = languages
 
 local augroup = nil
 local timer = nil
-local runtime_enabled = nil
 
 --- Per-buffer memo of the last evaluated expression.
 ---@type table<integer, table>
 local cache = {}
 
+--- `config.options` is the single source of truth for whether the plugin is
+--- on: `enable()`/`disable()`/`toggle()` persist their state there (through
+--- `M.configure`) rather than through a separate runtime flag, so this and
+--- `cfg.enabled` can never disagree.
 ---@return boolean
 local function enabled()
-  if runtime_enabled ~= nil then
-    return runtime_enabled
-  end
   return config.get().enabled
 end
 
@@ -265,7 +265,6 @@ end
 ---@return bitwise.Config
 function M.setup(opts)
   local cfg = config.setup(opts)
-  runtime_enabled = nil
   cache = {}
   renderer.setup_highlights()
   renderer.clear_all()
@@ -292,18 +291,27 @@ function M.configure(patch)
   return config.options
 end
 
+--- Enable the plugin and turn cursor-following back on.
+---
+--- Both `enabled` and `auto` are set so that the visualisation actually
+--- follows the cursor afterwards, rather than appearing once and then
+--- requiring `auto = true` to already have been set separately. Use
+--- `configure({ auto = false })` afterwards if you want it enabled but
+--- manual-only (see `show()`/`hide()`).
 function M.enable()
-  runtime_enabled = true
-  create_autocmds()
-  M.refresh()
+  M.configure({ enabled = true, auto = true })
 end
 
+--- Disable the plugin: stop cursor-following and clear any visualisation.
+---
+--- Sets `auto = false` along with `enabled` so the two flags never disagree
+--- about whether anything is currently following the cursor. `show()` still
+--- works on demand while disabled.
 function M.disable()
-  runtime_enabled = false
-  renderer.clear_all()
-  cache = {}
+  M.configure({ enabled = false, auto = false })
 end
 
+--- Flip between the states produced by `enable()` and `disable()`.
 ---@return boolean now_enabled
 function M.toggle()
   if enabled() then

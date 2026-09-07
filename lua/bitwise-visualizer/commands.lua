@@ -16,11 +16,11 @@ function M.create()
 
   cmd("BitwiseVisualizerEnable", function()
     bv.enable()
-  end, { desc = "Enable the bitwise visualizer" })
+  end, { desc = "Enable the bitwise visualizer and resume cursor-following" })
 
   cmd("BitwiseVisualizerDisable", function()
     bv.disable()
-  end, { desc = "Disable the bitwise visualizer" })
+  end, { desc = "Disable the bitwise visualizer and stop cursor-following" })
 
   cmd("BitwiseVisualizerToggle", function()
     local on = bv.toggle()
